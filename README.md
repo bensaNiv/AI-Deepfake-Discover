@@ -5,12 +5,14 @@ An experiment-based project that creates a security expert agent specialized in 
 ## Table of Contents
 
 - [Installation](#installation)
+- [Running the Experiment](#running-the-experiment)
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [How It Works](#how-it-works)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
-- [Results](#results)
+- [Experiment Results](#experiment-results)
+- [Costs](#costs)
 - [License](#license)
 
 ## Installation
@@ -47,6 +49,79 @@ cp .env.example .env
 # Pull a vision model
 ollama pull llava
 ```
+
+## Running the Experiment
+
+Follow these steps to run the video fraud detection experiment:
+
+### Step 1: Prepare Your Videos
+
+Place your test videos in the `videos/` folder:
+
+```bash
+videos/
+├── video_1.mp4    # Your first test video
+├── video_2.mp4    # Your second test video
+└── ...            # Add as many as needed
+```
+
+### Step 2: Start Ollama
+
+Make sure Ollama is running with the llava model:
+
+```bash
+# Start Ollama server (if not already running)
+ollama serve
+
+# In another terminal, verify llava is available
+ollama list
+```
+
+### Step 3: Run Analysis on Videos
+
+**Analyze a single video:**
+```bash
+python -m src.main --video videos/video_1.mp4 --frames 5
+```
+
+**Analyze with more frames for better accuracy:**
+```bash
+python -m src.main --video videos/video_1.mp4 --frames 10
+```
+
+**Get JSON output for programmatic processing:**
+```bash
+python -m src.main --video videos/video_1.mp4 --json > results/video_1_result.json
+```
+
+**Batch analyze all videos:**
+```bash
+# Analyze all videos in the folder
+for video in videos/*.mp4; do
+    echo "Analyzing: $video"
+    python -m src.main --video "$video" --json
+    echo "---"
+done
+```
+
+### Step 4: Generate Visualizations
+
+After collecting results, generate analysis graphs:
+
+```bash
+python scripts/generate_visualizations.py
+```
+
+This creates charts in `results/figures/`.
+
+### Alternative: Manual Analysis with External LLM
+
+If you prefer to use an external LLM (GPT-4V, Claude, Gemini):
+
+1. Open `docs/llm-video-analysis-prompt.md`
+2. Copy the system prompt to your LLM
+3. Upload video frames and use the analysis prompt
+4. Collect JSON responses in the same format
 
 ## Usage
 
@@ -210,6 +285,18 @@ The model correctly identified all AI-generated videos (100% recall) but produce
 ### Detailed Results
 
 See [`results/experiment_results.md`](results/experiment_results.md) for full analysis including per-video breakdowns.
+
+## Costs
+
+This project uses **Ollama** with locally-hosted models, resulting in **zero API costs**.
+
+| Category | Cost |
+|----------|------|
+| API Costs | $0 |
+| Cloud Compute | $0 |
+| **Total** | **$0** |
+
+See [`COSTS.md`](COSTS.md) for detailed cost breakdown.
 
 ## License
 
