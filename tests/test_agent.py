@@ -7,7 +7,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.agent import AnalysisResult, Verdict, VideoFraudDetectionAgent
+from src.agent import VideoFraudDetectionAgent
+from src.models import AnalysisResult, Verdict
+from src.parsing import aggregate_results, parse_llm_response
+from src.prompts import SYSTEM_PROMPT
 
 
 class TestVerdict:
@@ -80,9 +83,9 @@ class TestVideoFraudDetectionAgent:
 
     def test_system_prompt_exists(self):
         """Test that system prompt is defined."""
-        assert VideoFraudDetectionAgent.SYSTEM_PROMPT is not None
-        assert len(VideoFraudDetectionAgent.SYSTEM_PROMPT) > 100
-        assert "security expert" in VideoFraudDetectionAgent.SYSTEM_PROMPT.lower()
+        assert SYSTEM_PROMPT is not None
+        assert len(SYSTEM_PROMPT) > 100
+        assert "security expert" in SYSTEM_PROMPT.lower()
 
     def test_analyze_frame_file_not_found(self):
         """Test that analyze_frame raises error for missing file."""
@@ -104,8 +107,6 @@ class TestResponseParsing:
 
     def test_parse_valid_json_response(self):
         """Test parsing a valid JSON response."""
-        agent = VideoFraudDetectionAgent()
-
         response = json.dumps({
             "verdict": "AI_GENERATED",
             "confidence": 85,
@@ -114,7 +115,7 @@ class TestResponseParsing:
             "recommendations": ["review manually"],
         })
 
-        result = agent._parse_response(response)
+        result = parse_llm_response(response)
 
         assert result.verdict == Verdict.AI_GENERATED
         assert result.confidence == 0.85
@@ -123,8 +124,6 @@ class TestResponseParsing:
 
     def test_parse_authentic_verdict(self):
         """Test parsing AUTHENTIC verdict."""
-        agent = VideoFraudDetectionAgent()
-
         response = json.dumps({
             "verdict": "AUTHENTIC",
             "confidence": 90,
@@ -133,15 +132,13 @@ class TestResponseParsing:
             "recommendations": [],
         })
 
-        result = agent._parse_response(response)
+        result = parse_llm_response(response)
 
         assert result.verdict == Verdict.AUTHENTIC
         assert result.confidence == 0.90
 
     def test_parse_uncertain_verdict(self):
         """Test parsing UNCERTAIN verdict."""
-        agent = VideoFraudDetectionAgent()
-
         response = json.dumps({
             "verdict": "UNCERTAIN",
             "confidence": 45,
@@ -150,18 +147,16 @@ class TestResponseParsing:
             "recommendations": ["need more data"],
         })
 
-        result = agent._parse_response(response)
+        result = parse_llm_response(response)
 
         assert result.verdict == Verdict.UNCERTAIN
         assert result.confidence == 0.45
 
     def test_parse_invalid_json_fallback(self):
         """Test that invalid JSON falls back to UNCERTAIN."""
-        agent = VideoFraudDetectionAgent()
-
         response = "This is not valid JSON at all"
 
-        result = agent._parse_response(response)
+        result = parse_llm_response(response)
 
         assert result.verdict == Verdict.UNCERTAIN
         assert result.confidence == 0.0
@@ -169,8 +164,6 @@ class TestResponseParsing:
 
     def test_parse_json_with_extra_text(self):
         """Test parsing JSON embedded in extra text."""
-        agent = VideoFraudDetectionAgent()
-
         response = """Here is my analysis:
         {
             "verdict": "AI_GENERATED",
@@ -181,7 +174,7 @@ class TestResponseParsing:
         }
         That's my conclusion."""
 
-        result = agent._parse_response(response)
+        result = parse_llm_response(response)
 
         assert result.verdict == Verdict.AI_GENERATED
         assert result.confidence == 0.75
@@ -192,9 +185,7 @@ class TestResultAggregation:
 
     def test_aggregate_empty_results(self):
         """Test aggregating empty results list."""
-        agent = VideoFraudDetectionAgent()
-
-        result = agent._aggregate_results([])
+        result = aggregate_results([])
 
         assert result.verdict == Verdict.UNCERTAIN
         assert result.confidence == 0.0
@@ -202,8 +193,6 @@ class TestResultAggregation:
 
     def test_aggregate_single_result(self):
         """Test aggregating single result."""
-        agent = VideoFraudDetectionAgent()
-
         results = [
             AnalysisResult(
                 verdict=Verdict.AI_GENERATED,
@@ -214,64 +203,56 @@ class TestResultAggregation:
             )
         ]
 
-        result = agent._aggregate_results(results)
+        result = aggregate_results(results)
 
         assert result.verdict == Verdict.AI_GENERATED
         assert result.confidence == 0.9
 
     def test_aggregate_majority_ai_generated(self):
         """Test aggregation with majority AI_GENERATED."""
-        agent = VideoFraudDetectionAgent()
-
         results = [
             AnalysisResult(Verdict.AI_GENERATED, 0.9, "r1", ["i1"], []),
             AnalysisResult(Verdict.AI_GENERATED, 0.8, "r2", ["i2"], []),
             AnalysisResult(Verdict.AUTHENTIC, 0.7, "r3", ["i3"], []),
         ]
 
-        result = agent._aggregate_results(results)
+        result = aggregate_results(results)
 
         assert result.verdict == Verdict.AI_GENERATED
         assert "Analyzed 3 frames" in result.reasoning
 
     def test_aggregate_majority_authentic(self):
         """Test aggregation with majority AUTHENTIC."""
-        agent = VideoFraudDetectionAgent()
-
         results = [
             AnalysisResult(Verdict.AUTHENTIC, 0.9, "r1", [], []),
             AnalysisResult(Verdict.AUTHENTIC, 0.85, "r2", [], []),
             AnalysisResult(Verdict.AI_GENERATED, 0.6, "r3", ["i1"], []),
         ]
 
-        result = agent._aggregate_results(results)
+        result = aggregate_results(results)
 
         assert result.verdict == Verdict.AUTHENTIC
 
     def test_aggregate_confidence_average(self):
         """Test that confidence is averaged correctly."""
-        agent = VideoFraudDetectionAgent()
-
         results = [
             AnalysisResult(Verdict.AI_GENERATED, 0.8, "r1", [], []),
             AnalysisResult(Verdict.AI_GENERATED, 0.9, "r2", [], []),
             AnalysisResult(Verdict.AI_GENERATED, 1.0, "r3", [], []),
         ]
 
-        result = agent._aggregate_results(results)
+        result = aggregate_results(results)
 
         assert result.confidence == pytest.approx(0.9, rel=0.01)
 
     def test_aggregate_deduplicates_indicators(self):
         """Test that indicators are deduplicated."""
-        agent = VideoFraudDetectionAgent()
-
         results = [
             AnalysisResult(Verdict.AI_GENERATED, 0.9, "r1", ["dup", "unique1"], []),
             AnalysisResult(Verdict.AI_GENERATED, 0.9, "r2", ["dup", "unique2"], []),
         ]
 
-        result = agent._aggregate_results(results)
+        result = aggregate_results(results)
 
         # Should have 3 unique indicators, not 4
         assert len(result.indicators) == 3
@@ -292,6 +273,26 @@ class TestProjectStructure:
     def test_main_module_exists(self):
         """Test that main.py exists."""
         assert Path("src/main.py").is_file()
+
+    def test_models_module_exists(self):
+        """Test that models.py exists."""
+        assert Path("src/models.py").is_file()
+
+    def test_parsing_module_exists(self):
+        """Test that parsing.py exists."""
+        assert Path("src/parsing.py").is_file()
+
+    def test_prompts_module_exists(self):
+        """Test that prompts.py exists."""
+        assert Path("src/prompts.py").is_file()
+
+    def test_providers_module_exists(self):
+        """Test that providers.py exists."""
+        assert Path("src/providers.py").is_file()
+
+    def test_video_utils_module_exists(self):
+        """Test that video_utils.py exists."""
+        assert Path("src/video_utils.py").is_file()
 
     def test_videos_directory_exists(self):
         """Test that videos directory exists."""
@@ -316,3 +317,50 @@ class TestProjectStructure:
     def test_costs_file_exists(self):
         """Test that COSTS.md exists."""
         assert Path("COSTS.md").is_file()
+
+    def test_prd_file_exists(self):
+        """Test that PRD.md exists."""
+        assert Path("PRD.md").is_file()
+
+    def test_prompt_book_file_exists(self):
+        """Test that PROMPT_BOOK.md exists."""
+        assert Path("PROMPT_BOOK.md").is_file()
+
+    def test_contributing_file_exists(self):
+        """Test that CONTRIBUTING.md exists."""
+        assert Path("CONTRIBUTING.md").is_file()
+
+
+class TestPromptsModule:
+    """Tests for prompts module."""
+
+    def test_system_prompt_contains_security_expert(self):
+        """Test system prompt mentions security expert."""
+        assert "security expert" in SYSTEM_PROMPT.lower()
+
+    def test_system_prompt_contains_analysis_categories(self):
+        """Test system prompt has all analysis categories."""
+        assert "FACIAL ANALYSIS" in SYSTEM_PROMPT
+        assert "TEMPORAL CONSISTENCY" in SYSTEM_PROMPT
+        assert "TECHNICAL ARTIFACTS" in SYSTEM_PROMPT
+        assert "CONTEXTUAL ANALYSIS" in SYSTEM_PROMPT
+
+    def test_system_prompt_mentions_verdicts(self):
+        """Test system prompt mentions verdict options."""
+        assert "AI_GENERATED" in SYSTEM_PROMPT
+        assert "AUTHENTIC" in SYSTEM_PROMPT
+        assert "UNCERTAIN" in SYSTEM_PROMPT
+
+
+class TestModelsModule:
+    """Tests for models module."""
+
+    def test_verdict_is_enum(self):
+        """Test Verdict is an enum."""
+        from enum import Enum
+        assert issubclass(Verdict, Enum)
+
+    def test_analysis_result_is_dataclass(self):
+        """Test AnalysisResult is a dataclass."""
+        from dataclasses import is_dataclass
+        assert is_dataclass(AnalysisResult)

@@ -9,7 +9,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from .agent import VideoFraudDetectionAgent, Verdict
+from .agent import VideoFraudDetectionAgent
+from .models import Verdict
 
 
 def main():

@@ -4,7 +4,8 @@ A security expert agent specialized in investigating video frauds
 and detecting AI-generated video content.
 """
 
-from .agent import AnalysisResult, Verdict, VideoFraudDetectionAgent
+from .agent import VideoFraudDetectionAgent
+from .models import AnalysisResult, Verdict
 
 __version__ = "0.1.0"
 __author__ = "Your Name"
