@@ -266,3 +266,15 @@ Edit `prompts.py` to modify:
 ### Resource Management
 - Temporary files: Always cleaned up in `finally` block
 - Video handles: Released after frame extraction
+
+---
+
+## Architectural Decision Records
+
+Key architectural decisions are documented in the `docs/adr/` directory:
+
+| ADR | Title | Summary |
+|-----|-------|---------|
+| [ADR-001](adr/001-local-llm-inference.md) | Local LLM Inference | Why we chose Ollama over cloud APIs |
+| [ADR-002](adr/002-frame-sampling-strategy.md) | Frame Sampling | Why 5 evenly-distributed frames |
+| [ADR-003](adr/003-majority-voting-aggregation.md) | Majority Voting | How frame verdicts are aggregated |
