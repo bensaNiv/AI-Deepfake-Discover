@@ -13,6 +13,7 @@ An experiment-based project that creates a security expert agent specialized in 
 - [Configuration](#configuration)
 - [How It Works](#how-it-works)
 - [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 - [Project Structure](#project-structure)
 - [Experiment Results](#experiment-results)
 - [Costs](#costs)
@@ -201,6 +202,113 @@ pytest tests/ -v
 pytest tests/ --cov=src --cov-report=term-missing
 ```
 
+## Troubleshooting
+
+### Ollama Connection Issues
+
+**Error:** `Connection refused` or `Failed to connect to localhost:11434`
+
+**Solution:**
+1. Ensure Ollama is running:
+   ```bash
+   ollama serve
+   ```
+2. Check if Ollama is listening:
+   ```bash
+   curl http://localhost:11434/api/tags
+   ```
+3. If using a custom host, update `.env`:
+   ```bash
+   OLLAMA_HOST=http://your-host:11434
+   ```
+
+### Model Not Found
+
+**Error:** `model 'llava' not found`
+
+**Solution:**
+1. Pull the required model:
+   ```bash
+   ollama pull llava
+   ```
+2. Verify available models:
+   ```bash
+   ollama list
+   ```
+3. If using a different model, specify it:
+   ```bash
+   python -m src.main --video video.mp4 --model llava:13b
+   ```
+
+### Video Codec Issues
+
+**Error:** `Could not open video` or `Video has no frames`
+
+**Solution:**
+1. Verify video file exists and is not corrupted:
+   ```bash
+   ffprobe path/to/video.mp4
+   ```
+2. Ensure OpenCV supports the codec. Convert if needed:
+   ```bash
+   ffmpeg -i input.mov -c:v libx264 output.mp4
+   ```
+3. Check file permissions
+
+### Memory Errors
+
+**Error:** `CUDA out of memory` or system becomes unresponsive
+
+**Solution:**
+1. Use a smaller model:
+   ```bash
+   python -m src.main --video video.mp4 --model llava:7b
+   ```
+2. Reduce frame count:
+   ```bash
+   python -m src.main --video video.mp4 --frames 3
+   ```
+3. Close other GPU-intensive applications
+4. For CPU-only inference, ensure Ollama is configured for CPU
+
+### Slow Inference
+
+**Issue:** Analysis takes too long (>60 seconds per frame)
+
+**Solution:**
+1. Use a smaller model variant
+2. Reduce the number of frames sampled
+3. Ensure GPU acceleration is enabled in Ollama
+4. Check system resources with `nvidia-smi` or `htop`
+
+### JSON Parsing Errors
+
+**Error:** `UNCERTAIN` verdict with parsing issues in recommendations
+
+**Solution:**
+1. This usually indicates the LLM returned malformed JSON
+2. Try running the analysis again (LLM responses can vary)
+3. Check Ollama logs for errors:
+   ```bash
+   journalctl -u ollama -f
+   ```
+4. Consider using a larger model for more reliable JSON output
+
+### Import Errors
+
+**Error:** `ModuleNotFoundError: No module named 'src'`
+
+**Solution:**
+1. Ensure you're in the project root directory
+2. Install the package in development mode:
+   ```bash
+   pip install -e .
+   ```
+3. Or run as a module:
+   ```bash
+   python -m src.main --help
+   ```
+
 ## Project Structure
 
 ```
@@ -221,7 +329,11 @@ project9/
 │   ├── prompts.md               # Agent prompts documentation
 │   ├── llm-video-analysis-prompt.md  # External LLM prompt
 │   ├── architecture.md          # System architecture
-│   └── research.md              # Research methodology
+│   ├── research.md              # Research methodology
+│   └── adr/                     # Architectural Decision Records
+│       ├── 001-local-llm-inference.md
+│       ├── 002-frame-sampling-strategy.md
+│       └── 003-majority-voting-aggregation.md
 │
 ├── videos/                      # Test videos
 │   ├── vidoe_1.mp4              # AI-generated
@@ -303,20 +415,15 @@ See [`COSTS.md`](COSTS.md) for detailed cost breakdown.
 
 ## License
 
-MIT License
+Academic Research Project
+**Institution**: Reichman University, IL
 
 ## Credits
 
 - Ollama for local LLM inference
 - LLaVA model for vision capabilities
 
-
-## 📄 License
-
-Academic Research Project
-**Institution**: Reichman University, IL
-
-## 👥 Authors
+## Authors
 
 **Niv Ben Salmon** & **Omer Ben Salmon**
 MSc Computer Science Students
