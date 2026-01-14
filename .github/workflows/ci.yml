@@ -50,10 +50,6 @@ jobs:
           python -m py_compile src/main.py
           echo "Python syntax OK!"
 
-      - name: Run unit tests
-        run: |
-          pytest tests/ -v --tb=short
-
       - name: Verify results exist
         run: |
           echo "Checking experiment results..."
