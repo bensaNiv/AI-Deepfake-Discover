@@ -5,6 +5,10 @@ opencv-python>=4.8.0      # Video frame extraction
 # Configuration
 python-dotenv>=1.0.0      # Environment variable management
 
+# Visualization
+matplotlib>=3.7.0         # Plotting and graphs
+numpy>=1.24.0             # Numerical operations
+
 # Testing
 pytest>=7.4.0             # Test framework
 pytest-cov>=4.1.0         # Coverage reporting

@@ -1,0 +1,46 @@
+{
+  "experiment": {
+    "name": "AI Video Fraud Detection",
+    "date": "2026-01",
+    "model": "Vision LLM with security expert persona",
+    "dataset_size": 5
+  },
+  "dataset": {
+    "total_videos": 5,
+    "ai_generated": 3,
+    "authentic": 2,
+    "videos": [
+      {"id": 1, "file": "vidoe_1.mp4", "ground_truth": "AI_GENERATED"},
+      {"id": 2, "file": "video_2.mp4", "ground_truth": "AI_GENERATED"},
+      {"id": 3, "file": "video_3.mp4", "ground_truth": "AI_GENERATED"},
+      {"id": 4, "file": "video_4.mp4", "ground_truth": "AUTHENTIC"},
+      {"id": 5, "file": "video_5.mp4", "ground_truth": "AUTHENTIC"}
+    ]
+  },
+  "predictions": [
+    {"video_id": 1, "prediction": "AI_GENERATED", "confidence": 98, "correct": true},
+    {"video_id": 2, "prediction": "AI_GENERATED", "confidence": 95, "correct": true},
+    {"video_id": 3, "prediction": "AI_GENERATED", "confidence": 95, "correct": true},
+    {"video_id": 4, "prediction": "AI_GENERATED", "confidence": 98, "correct": false},
+    {"video_id": 5, "prediction": "AUTHENTIC", "confidence": 95, "correct": true}
+  ],
+  "confusion_matrix": {
+    "true_positives": 3,
+    "true_negatives": 1,
+    "false_positives": 1,
+    "false_negatives": 0
+  },
+  "metrics": {
+    "accuracy": 0.80,
+    "precision": 0.75,
+    "recall": 1.00,
+    "f1_score": 0.857,
+    "average_confidence": 96.2
+  },
+  "error_analysis": {
+    "total_errors": 1,
+    "error_type": "false_positive",
+    "error_video": 4,
+    "error_description": "Authentic video misclassified as AI-generated due to complex motion artifacts"
+  }
+}

@@ -127,39 +127,89 @@ pytest tests/ --cov=src --cov-report=term-missing
 
 ```
 project9/
-├── README.md                 # This file
-├── CLAUDE.md                # Claude context file
-├── requirements.txt          # Python dependencies
-├── .gitignore               # Git ignore rules
-├── .env.example             # Configuration template
-├── pyproject.toml           # Package configuration
-├── src/                     # Source code
+├── README.md                    # This file
+├── CLAUDE.md                    # Claude context file
+├── requirements.txt             # Python dependencies
+├── pyproject.toml               # Package configuration
+├── .gitignore                   # Git ignore rules
+├── .env.example                 # Configuration template
+│
+├── src/                         # Source code
 │   ├── __init__.py
-│   ├── agent.py             # VideoFraudDetectionAgent
-│   └── main.py              # CLI entry point
-├── tests/                   # Test suite
+│   ├── agent.py                 # VideoFraudDetectionAgent
+│   └── main.py                  # CLI entry point
+│
+├── docs/                        # Documentation
+│   ├── prompts.md               # Agent prompts documentation
+│   ├── llm-video-analysis-prompt.md  # External LLM prompt
+│   ├── architecture.md          # System architecture
+│   └── research.md              # Research methodology
+│
+├── videos/                      # Test videos
+│   ├── vidoe_1.mp4              # AI-generated
+│   ├── video_2.mp4              # AI-generated
+│   ├── video_3.mp4              # AI-generated
+│   ├── video_4.mp4              # Authentic
+│   └── video_5.mp4              # Authentic
+│
+├── results/                     # Experiment outputs
+│   ├── experiment_results.md    # Full analysis report
+│   ├── figures/                 # Visualizations
+│   │   ├── confidence_by_video.png
+│   │   ├── confusion_matrix.png
+│   │   └── performance_metrics.png
+│   └── metrics/
+│       └── experiment_metrics.json
+│
+├── scripts/                     # Utility scripts
+│   └── generate_visualizations.py
+│
+├── tests/                       # Test suite
 │   ├── __init__.py
 │   └── conftest.py
-├── docs/                    # Documentation
-│   ├── prompts.md           # Agent prompts
-│   ├── architecture.md      # System architecture
-│   └── research.md          # Research methodology
-├── data/                    # Test data
-│   ├── raw/                 # Original test files
-│   └── processed/           # Processed data
-├── results/                 # Experiment outputs
-│   ├── figures/             # Visualizations
-│   └── metrics/             # Analysis metrics
-├── notebooks/               # Jupyter notebooks
-├── scripts/                 # Utility scripts
-└── config/                  # Configuration files
+│
+└── config/                      # Configuration files
 ```
 
-## Results
+## Experiment Results
 
-Experiment results will be documented here after running analyses on test datasets.
+### Overview
 
-See `notebooks/` for detailed analysis and `results/` for raw outputs.
+We tested the agent on a dataset of 5 videos:
+- **3 AI-generated videos** (Videos 1-3)
+- **2 authentic videos** (Videos 4-5)
+
+### Performance Summary
+
+| Metric | Value |
+|--------|-------|
+| **Accuracy** | 80% (4/5) |
+| **Precision** | 75% |
+| **Recall** | 100% |
+| **F1 Score** | 0.857 |
+
+### Model Confidence by Video
+
+![Confidence by Video](results/figures/confidence_by_video.png)
+
+The chart shows model confidence for each video. Green bars indicate correct predictions, red indicates incorrect. The model achieved high confidence (95-98%) across all predictions, but notably the one error (Video 4) also had 98% confidence - indicating a calibration issue.
+
+### Confusion Matrix
+
+![Confusion Matrix](results/figures/confusion_matrix.png)
+
+The model correctly identified all AI-generated videos (100% recall) but produced one false positive - classifying an authentic video as AI-generated.
+
+### Key Findings
+
+1. **High Recall**: The model detected all 3 AI-generated videos correctly
+2. **False Positive Risk**: Complex motion in authentic videos can trigger false AI detection
+3. **Confidence Calibration**: High confidence doesn't always correlate with correctness
+4. **Common AI Indicators**: Morphing artifacts, anatomical inconsistencies, and temporal flickering were the most frequently detected signs
+
+### Detailed Results
+
+See [`results/experiment_results.md`](results/experiment_results.md) for full analysis including per-video breakdowns.
 
 ## License
 
