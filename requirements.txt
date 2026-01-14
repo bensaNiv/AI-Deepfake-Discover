@@ -1,0 +1,14 @@
+# Core Dependencies
+requests>=2.31.0          # HTTP client for Ollama API
+opencv-python>=4.8.0      # Video frame extraction
+
+# Configuration
+python-dotenv>=1.0.0      # Environment variable management
+
+# Testing
+pytest>=7.4.0             # Test framework
+pytest-cov>=4.1.0         # Coverage reporting
+
+# Optional: Alternative LLM providers (uncomment when needed)
+# openai>=1.0.0           # OpenAI API client
+# anthropic>=0.7.0        # Anthropic API client
